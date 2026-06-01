@@ -7,8 +7,8 @@ from datetime import timedelta
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(os.path.join(BASE_DIR, '.env'))
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-default-key-for-dev')
-DEBUG = True
-ALLOWED_HOSTS = ['*']
+DEBUG = os.getenv('DEBUG', 'True') == 'True'
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',')
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -36,7 +36,6 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 ROOT_URLCONF = 'hospital_backend.urls'
 
 TEMPLATES = [
@@ -57,29 +56,25 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'hospital_backend.wsgi.application'
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+MONGO_URI = os.getenv('MONGO_URI')
+if MONGO_URI:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'djongo',
+            'NAME': 'hospital_management',
+            'ENFORCE_SCHEMA': False,
+            'CLIENT': {
+                'host': MONGO_URI
+            }
+        }
     }
-}
-
-# --- TO USE MONGODB ATLAS ---
-# 1. Whitelist your IP in MongoDB Atlas Network Access (0.0.0.0/0).
-# 2. Comment out the SQLite DATABASES config above.
-# 3. Uncomment the MongoDB DATABASES config below.
-#
-# MONGO_URI = os.getenv('MONGO_URI')
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'djongo',
-#         'NAME': 'hospital_management',
-#         'ENFORCE_SCHEMA': False,
-#         'CLIENT': {
-#             'host': MONGO_URI
-#         }
-#     }
-# }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -101,12 +96,9 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_L10N = True
 USE_TZ = True
-
-
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / "staticfiles"
-
-
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'accounts.User'
 
